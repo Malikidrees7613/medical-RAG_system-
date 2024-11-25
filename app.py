@@ -22,7 +22,7 @@ if index_name not in pc.list_indexes().names():
 index = Index(index_name, host='https://medical-knowledge-base-f393qzo.svc.aped-4627-b74a.pinecone.io') 
 
 # Initialize Generator Model (using distilgpt2 here as an example)
-model_name = "distilgpt2"  # Using a smaller model
+model_name = "distilbert-base-uncased"  # Using a smaller model
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 generator_model = AutoModelForCausalLM.from_pretrained(model_name)
 
