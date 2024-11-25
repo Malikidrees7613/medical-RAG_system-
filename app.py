@@ -22,13 +22,13 @@ if index_name not in pc.list_indexes().names():
 index = Index(index_name, host='https://medical-knowledge-base-f393qzo.svc.aped-4627-b74a.pinecone.io') 
 
 # Initialize Generator Model (using distilgpt2 here as an example)
-model_name = "distilbert-base-uncased"  # Using a smaller model
+model_name = "distilgpt2"  # Using a smaller model
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 generator_model = AutoModelForCausalLM.from_pretrained(model_name)
-
+embedding_model="distilbert-base-uncased"
 # Function to Retrieve Similar Chunks
 def retrieve_similar(query, top_k=5):
-    query_embedding = model_name.encode(query)  # Replace with your embedding logic
+    query_embedding = embedding_model.encode(query)  # Replace with your embedding logic
     results = index.query(query_embedding, top_k=top_k, include_metadata=True)
     return [result["metadata"]["combined"] for result in results["matches"]]
 
