@@ -19,7 +19,7 @@ if index_name not in pc.list_indexes().names():
     )
 
 # Connect to the Pinecone index
-index = pc.index(index_name)
+index = pc.index("medical-knowledge-base")
 
 # Initialize Generator Model
 model_name = "distilbert-base-uncased"  # Or another open-source model
