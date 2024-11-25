@@ -1,0 +1,58 @@
+import streamlit as st
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import pinecone
+
+# Connect to Pinecone
+pinecone.init(api_key="pcsk_4bHEfS_37sPFUVPwFjP2vdB59Ginij3LLXpShnLesezTJ13U6F3u7SbB4UgpZ5H3F1VEuG", environment="us-west1-gcp")
+index_name = "medical-knowledge-base"
+index = pinecone.Index(index_name)
+
+# Initialize Generator Model
+model_name = "distilbert-base-uncased"  # Or another open-source model
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+generator_model = AutoModelForCausalLM.from_pretrained(model_name)
+
+# Function to Retrieve Similar Chunks
+def retrieve_similar(query, top_k=5):
+    # Generate embedding for the query (use the same embedding model as used for indexing)
+    query_embedding = model_name.encode(query)  # Replace with your embedding logic
+    results = index.query(query_embedding, top_k=top_k, include_metadata=True)
+    return [result["metadata"]["combined"] for result in results["matches"]]
+
+# Function to Generate Response
+def generate_response(query, retrieved_chunks):
+    context = "\n".join(retrieved_chunks)
+    prompt = f"""
+    You are a medical assistant chatbot. Answer the user's query based on the following context:
+
+    Context:
+    {context}
+
+    Query: {query}
+
+    Response:
+    """
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True)
+    outputs = generator_model.generate(inputs["input_ids"], max_length=200, num_beams=5, temperature=0.7)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+
+# Streamlit App
+st.title("RAG Medical Chatbot")
+st.write("Ask questions about diseases, symptoms, and treatments!")
+
+# User Input
+user_query = st.text_input("Enter your medical query:")
+
+# Process Query and Display Response
+if st.button("Get Response"):
+    if user_query.strip():
+        with st.spinner("Generating response..."):
+            retrieved_chunks = retrieve_similar(user_query)
+            if retrieved_chunks:
+                response = generate_response(user_query, retrieved_chunks)
+                st.success("Chatbot Response:")
+                st.write(response)
+            else:
+                st.error("No relevant information found!")
+    else:
+        st.error("Please enter a query.")
