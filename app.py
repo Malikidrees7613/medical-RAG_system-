@@ -1,11 +1,25 @@
 import streamlit as st
 from transformers import AutoTokenizer, AutoModelForCausalLM
-import pinecone
+from pinecone import Pinecone, ServerlessSpec  # Updated import statement
 
-# Connect to Pinecone
-pinecone.init(api_key="pcsk_4bHEfS_37sPFUVPwFjP2vdB59Ginij3LLXpShnLesezTJ13U6F3u7SbB4UgpZ5H3F1VEuG", environment="us-west1-gcp")
+# Initialize Pinecone instance
+pc = Pinecone(api_key="pcsk_4bHEfS_37sPFUVPwFjP2vdB59Ginij3LLXpShnLesezTJ13U6F3u7SbB4UgpZ5H3F1VEuG")  # Replace with your Pinecone API key
+
+# Check if the index exists, and create it if not
 index_name = "medical-knowledge-base"
-index = pinecone.Index(index_name)
+if index_name not in pc.list_indexes().names():
+    pc.create_index(
+        name=index_name, 
+        dimension=768,  # Adjust based on your embedding size
+        metric='euclidean',
+        spec=ServerlessSpec(
+            cloud='aws',
+            region='us-west-2'  # Adjust based on your region
+        )
+    )
+
+# Connect to the Pinecone index
+index = pc.index(index_name)
 
 # Initialize Generator Model
 model_name = "distilbert-base-uncased"  # Or another open-source model
