@@ -1,2 +1,2 @@
 # medical-RAG_system-
-This is the project for AI bootcamp
+This is the project for AI bootcamp..
