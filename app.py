@@ -1,9 +1,9 @@
 import streamlit as st
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from pinecone import Pinecone, ServerlessSpec  # Updated import statement
+from pinecone import Pinecone, ServerlessSpec, Index
 
 # Initialize Pinecone instance
-pc = Pinecone(api_key="pcsk_4bHEfS_37sPFUVPwFjP2vdB59Ginij3LLXpShnLesezTJ13U6F3u7SbB4UgpZ5H3F1VEuG")  # Replace with your Pinecone API key
+pc = Pinecone(api_key="pcsk_4bHEfS_37sPFUVPwFjP2vdB59Ginij3LLXpShnLesezTJ13U6F3u7SbB4UgpZ5H3F1VEuG")
 
 # Check if the index exists, and create it if not
 index_name = "medical-knowledge-base"
@@ -14,21 +14,20 @@ if index_name not in pc.list_indexes().names():
         metric='euclidean',
         spec=ServerlessSpec(
             cloud='aws',
-            region='us-west-2'  # Adjust based on your region
+            region='us-east-1'
         )
     )
 
 # Connect to the Pinecone index
-index = pc.index("medical-knowledge-base")
+index = Index(index_name, host='https://medical-knowledge-base-f393qzo.svc.aped-4627-b74a.pinecone.io') 
 
-# Initialize Generator Model
-model_name = "distilbert-base-uncased"  # Or another open-source model
+# Initialize Generator Model (using distilgpt2 here as an example)
+model_name = "distilgpt2"  # Using a smaller model
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 generator_model = AutoModelForCausalLM.from_pretrained(model_name)
 
 # Function to Retrieve Similar Chunks
 def retrieve_similar(query, top_k=5):
-    # Generate embedding for the query (use the same embedding model as used for indexing)
     query_embedding = model_name.encode(query)  # Replace with your embedding logic
     results = index.query(query_embedding, top_k=top_k, include_metadata=True)
     return [result["metadata"]["combined"] for result in results["matches"]]
@@ -54,10 +53,8 @@ def generate_response(query, retrieved_chunks):
 st.title("RAG Medical Chatbot")
 st.write("Ask questions about diseases, symptoms, and treatments!")
 
-# User Input
 user_query = st.text_input("Enter your medical query:")
 
-# Process Query and Display Response
 if st.button("Get Response"):
     if user_query.strip():
         with st.spinner("Generating response..."):
